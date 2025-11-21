@@ -15,6 +15,9 @@ import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
 // FIXME: this code has TERRIBLE DESIGN all around
+
+// @ SILVIA -- i didn't edit this file at all, but all the other classes implement the requisite data-collecting behaviors, so this class can be pretty much totally scrapped
+
 public class MyFirstLinter {
 	
 	String[] fieldForAnalysisByThisProgram = new String[1];
