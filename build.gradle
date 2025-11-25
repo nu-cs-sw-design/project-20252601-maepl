@@ -9,11 +9,16 @@ repositories {
 
 apply plugin : "java"
 ext {
-    javaMainClass = "example.MyFirstLinter"
+    javaMainClass = "example.TestRunner"
 }
 
 application {
     mainClassName = javaMainClass
+}
+
+// Add test classes to the runtime classpath so TestRunner can load them
+run {
+    classpath += sourceSets.test.runtimeClasspath
 }
 
 sourceSets {
