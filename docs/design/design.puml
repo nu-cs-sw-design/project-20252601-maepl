@@ -1,2 +1,174 @@
 @startuml
+left to right direction
+
+package example {
+    +class "TestRunner" {
+        +{static} main(args: String[]): void
+    }
+}
+
+package linter {
+    +class "ClassLoaderService" {
+        +load(className: String): ClassNode
+    }
+
+    +class "LinterEngine" {
+        -{final} rules: List<LintRule>
+        +LinterEngine(rules: List<LintRule>)
+        +LinterEngine()
+        +registerRule(rule: LintRule): void
+        +run(node: ClassNode): List<LintWarning>
+    }
+
+    LinterEngine --> rules.LintRule
+}
+
+package rules {
+    +interface "LintRule" {
+        +check(classNode: ClassNode): List<LintWarning>
+    }
+
+    +class "LintWarning" {
+        +{final} className: String
+        +{final} message: String
+        +LintWarning(className: String, message: String)
+    }
+
+    +class "EmptyCatchRule" implements LintRule {
+        +check(classNode: ClassNode): List<LintWarning>
+        -isCatchBlockEmpty(method: MethodNode, tryCatchBlock: TryCatchBlockNode): boolean
+    }
+
+    +class "TightCouplingRule" implements LintRule {
+        -{static}{final} COUPLING_THRESHOLD: int
+        +check(classNode: ClassNode): List<LintWarning>
+    }
+
+    +class "UnusedImportsRule" implements LintRule {
+        +check(classNode: ClassNode): List<LintWarning>
+    }
+
+    LintRule --> LintWarning
+}
+
+package info {
+    +class "ClassInfo" {
+        -{final} internalName: String
+        -{final} superName: String
+        -{final} interfaceNames: List<String>
+        -{final} isPublic: boolean
+        -{final} fields: List<FieldInfo>
+        -{final} methods: List<MethodInfo>
+
+        +ClassInfo(internalName: String, superName: String, interfaceNames: List<String>, isPublic: boolean, fields: List<FieldInfo>, methods: List<MethodInfo>)
+        +getInternalName(): String
+        +getSuperName(): String
+        +getInterfaceNames(): List<String>
+        +isPublic(): boolean
+        +getFields(): List<FieldInfo>
+        +getMethods(): List<MethodInfo>
+    }
+
+    +class "FieldInfo" {
+        -{final} name: String
+        -{final} descriptor: String
+        -{final} friendlyType: String
+        -{final} isPublic: boolean
+
+        +FieldInfo(name: String, descriptor: String, isPublic: boolean)
+        +{static} fromFieldNode(node: FieldNode): FieldInfo
+        +getName(): String
+        +getDescriptor(): String
+        +getFriendlyType(): String
+        +isPublic(): boolean
+    }
+
+    +class "MethodInfo" {
+        -{final} name: String
+        -{final} methodSignature: String
+        -{final} returnType: String
+        -{final} parameterTypeNames: List<String>
+        -{final} isPublic: boolean
+        -{final} isStatic: boolean
+        -{final} instructions: InstructionsInfo
+
+        +MethodInfo(name: String, methodSignature: String, returnType: String, parameterTypeNames: List<String>, isPublic: boolean, isStatic: boolean, instructions: InstructionsInfo)
+        +{static} fromMethodNode(node: MethodNode, instructions: InstructionsInfo): MethodInfo
+        +getName(): String
+        +getMethodSignature(): String
+        +getReturnType(): String
+        +getParameterTypeNames(): List<String>
+        +isPublic(): boolean
+        +isStatic(): boolean
+        +getInstructions(): InstructionsInfo
+    }
+
+    +class "InstructionsInfo" {
+        -{final} methodCalls: List<MethodCall>
+        -{final} varInsns: List<VarInsn>
+
+        +InstructionsInfo(methodCalls: List<MethodCall>, varInsns: List<VarInsn>)
+        +getMethodCalls(): List<MethodCall>
+        +getVarInsns(): List<VarInsn>
+    }
+
+    +class "MethodCall" {
+        -{final} owner: String
+        -{final} name: String
+
+        +MethodCall(owner: String, name: String)
+        +getOwner(): String
+        +getName(): String
+    }
+
+    +class "VarInsn" {
+        -{final} opcode: int
+
+        +VarInsn(opcode: int)
+        +getOpcode(): int
+    }
+
+    ClassInfo --> FieldInfo
+    ClassInfo --> MethodInfo
+    MethodInfo --> InstructionsInfo
+    InstructionsInfo --> MethodCall
+    InstructionsInfo --> VarInsn
+    InstructionsInfo +-- MethodCall
+    InstructionsInfo +-- VarInsn
+}
+
+package collectors {
+    +class "ClassInfoCollector" {
+        -fieldCollector: FieldInfoCollector
+        -methodCollector: MethodInfoCollector
+
+        +collectClassInfo(classNode: ClassNode): ClassInfo
+    }
+
+    +class "FieldInfoCollector" {
+        +collectFieldInfo(fieldNode: FieldNode): FieldInfo
+    }
+
+    +class "MethodInfoCollector" {
+        -instructionsCollector: InstructionsCollector
+
+        +collectMethodInfo(methodNode: MethodNode): MethodInfo
+    }
+
+    +class "InstructionsCollector" {
+        +collectInstructions(methodNode: MethodNode): InstructionsInfo
+    }
+
+    ClassInfoCollector --> FieldInfoCollector
+    ClassInfoCollector --> MethodInfoCollector
+    MethodInfoCollector --> InstructionsCollector
+}
+
+example.TestRunner --> linter.ClassLoaderService
+example.TestRunner --> linter.LinterEngine
+collectors.ClassInfoCollector --> info.ClassInfo
+collectors.FieldInfoCollector --> info.FieldInfo
+collectors.MethodInfoCollector --> info.MethodInfo
+collectors.InstructionsCollector --> info.InstructionsInfo
+
 @enduml
